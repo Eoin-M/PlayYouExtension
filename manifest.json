@@ -1,0 +1,27 @@
+{
+  "manifest_version": 2,
+
+  "name": "PlayYou",
+  "description": "Submit Songs to PlayYou",
+  "version": "1.0",
+  "homepage_url": "http://danu7.it.nuigalway.ie:8620/",
+  "content_scripts": [
+    {
+	  "matches": ["*://*.youtube.com/*"],
+      "js" : ["script/controller.js"],
+      "js" : ["script/angular.min.js"],
+      "js" : ["script/bootstrap.min.js"],
+      "js" : ["script/jquery.min.js"],
+      "js" : ["script/autocomplete.js"]
+    }
+  ],
+  "browser_action": {
+    "default_icon": "icon.png",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+	"cookies",
+    "http://danu7.it.nuigalway.ie/"
+  ]
+}
