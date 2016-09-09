@@ -8,6 +8,15 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		$scope.songSearch = [];
 		console.log(window.location.href );
 		
+		function escape(html) {
+		  return String(html)
+			.replace(/&/g, '&amp;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;');
+		}
+		
 		function b64_to_utf8( str ) {
 		  return decodeURIComponent(escape(window.atob( str )));
 		}
