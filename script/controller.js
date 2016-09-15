@@ -8,7 +8,7 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		$scope.songSearch = [];
 		console.log(window.location.href );
 		
-		function escape(html) {
+		/*function escape(html) {
 		  return String(html)
 			.replace(/&/g, '&amp;')
 			.replace(/"/g, '&quot;')
@@ -26,12 +26,50 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 			encodedUser = decodeURI(b64_to_utf8(token.split('.')[1]));
 			$scope.user = JSON.parse(encodedUser); 
 			console.dir($scope.user);
-		};
+		};*/
+		
+		function url_base64_decode(str) {
+		  var output = str.replace(/-/g, '+').replace(/_/g, '/');
+		  switch (output.length % 4) {
+			case 0:
+			  break;
+			case 2:
+			  output += '==';
+			  break;
+			case 3:
+			  output += '=';
+			  break;
+			default:
+			  throw 'Illegal base64url string!';
+		  }
+		  var result = window.atob(output); //polifyll https://github.com/davidchambers/Base64.js
+		  try{
+			return decodeURIComponent(escape(result));
+		  } catch (err) {
+			return result;
+		  }
+		}
+		
+		function decodeToken(str){
+			str = str.split('.')[1];
+			var json = null, error = null;
+			  try {
+				json = url_base64_decode(str);
+				json = (JSON.parse(decodeURI(json)), undefined, 2);
+			  } catch (e) {
+				error = e;
+			console.log(e);
+			  }
+			console.log(json);
+			$scope.user = json; 
+			console.dir($scope.user);
+		}
 		
 		$scope.getSongs = function(){
 			$http.get(danu + '/api/playyou/getSongs')
 			.success(function(data){
 				console.dir(data.songs);
+				console.log(data.songs[data.songs.length-1]._id.getTimestamp());
 				$scope.songs = data.songs;
 				if($scope.newSong.link) $scope.checkLink($scope.newSong.link);
 				for(var i = 0; i < $scope.songs.length; i++){
@@ -106,7 +144,30 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 				decodeToken(data.token);
 				getForm();
 			})
-			.error(function(data){console.dir(data)});
+			.error(function(data){
+				$scope.loginError = "No User Found!";
+			});
+		}
+		
+		$scope.me = function(){
+			$http.post(danu + '/api/playyou/test', {},{
+				headers: {
+					'authorization': 'Bearer ' + localStorage.getItem('JWT')
+				},
+			})
+			.success(function(data){
+				console.log(data);
+			})
+			.error(function(data){
+				console.log(data);
+			});
+		}
+		
+		$scope.logout = function(){
+			$scope.user = null;
+			$scope.songs = [];
+			$scope.songSearch = [];
+			localStorage.removeItem('JWT');
 		}
 		
 		var token = localStorage.getItem('JWT');
@@ -155,13 +216,23 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		$scope.addSong = function(song){
 			console.log("Add Song");
 			
-			$http.post(danu + '/api/playyou/addSong', {song: song, name: $scope.user.name, _id: $scope.user._id})
+			$http.post(danu + '/api/playyou/addSong', {
+				song: song, name: $scope.user.name, _id: $scope.user._id
+			}, {
+				headers: {
+					'authorization': 'Bearer ' + localStorage.getItem('JWT')
+				},
+			})
 			.success(function(data){
 				$scope.addResponse = "Success";
 			})
 			.error(function(data, status){
-				alert('Error: ' + status);
+				//alert('Error: ' + status);
 			});
 		}
 	}
 );
+
+$(document).ready(function(){
+	$('[data-toggle="tooltip"]').tooltip();
+});

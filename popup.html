@@ -18,16 +18,20 @@
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
 		<!-- Latest compiled and minified JavaScript -->
-		<!--<script src="bootstrap.min.js"></script>-->
+		<script src="script/bootstrap.min.js"></script>
 		<link rel="stylesheet" href="style/autocomplete.css">
 		<script type="text/javascript" src="script/autocomplete.js"></script>
 		<script src="script/controller.js"></script>
+		
 		<style>
 		  body {
 			font-family: "Segoe UI", "Lucida Grande", Tahoma, sans-serif;
 			font-size: 100%;
 		  }
-		  
+		  .signOut {
+			float: right;
+			cursor: pointer;
+		  }
 		  span {
 			float: left;
 			font-size: 1.4em;
@@ -58,7 +62,7 @@
 			<div ng-show="user">
 				<div style="padding: 10px 10px 0px 10px">
 					<!--<button type="button" class="close" data-dismiss="modal">&times;</button>-->
-					<h3 class="modal-title">Suggest a Song</h3>
+					<h3 class="modal-title" style="margin-bottom: 10px;">Suggest a Song <a class="signOut" data-toggle="tooltip" data-placement="bottom" title="Logout" ng-click="logout()"><span class="glyphicon glyphicon-log-out" /></a></h3>
 					<!--<datalist id="titles">
 					  <option ng-repeat="song in songs" value="{{song.title}} - {{song.artist}}">
 					</datalist>-->
@@ -80,11 +84,13 @@
 					</div>
 				</div>
 			</div>
+			<!--<button class="btn btn-danger" ng-click="me()">Me</button>-->
 			<div ng-show="!user">
 				<span class="header">Please Login:</span>
 				<form class="form-group" ng-submit="login(cred.email)">
-					<input class="form-control myInput" placeholder="Email Address" ng-model="cred.email">
+					<input class="form-control myInput" type="text" name="email" placeholder="Email Address" ng-model="cred.email">
 					<button type="submit" class="btn btn-primary" style="margin-bottom: 20px; margin-left: 20px;">Login</button>
+					<div style="color:red; font-size: 1.2em;">{{loginError}}</div>
 				</form>
 			</div>
 		</div>
