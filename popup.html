@@ -19,6 +19,7 @@
 
 		<!-- Latest compiled and minified JavaScript -->
 		<script src="script/bootstrap.min.js"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
 		<link rel="stylesheet" href="style/autocomplete.css">
 		<script type="text/javascript" src="script/autocomplete.js"></script>
 		<script src="script/controller.js"></script>
@@ -48,6 +49,17 @@
 			color: green;
 			font-size: 1.6em;
 		  }
+		  .switch {
+			position: absolute;
+			left: -5px;
+			top: 80px;
+			cursor: pointer;
+			color: #337ab7;
+			opacity: 0.9;
+		  }
+		  .switch:hover {
+			opacity: 1;
+		  }
 		</style>
 
 		<!--
@@ -71,6 +83,7 @@
 				</div>
 				<div class="modal-body">
 					<div class="modal-footer">
+						<i class="fa fa-refresh fa-3x switch" ng-click="switch()" ng-disabled="!newSong.title && !newSong.artist"></i>
 						<form class="form-horizontal">
 							<span>Title:</span>
 							<input id="songTitle" type="text" class="form-control" ng-class="{inputRed:(!newSong.title || correctTitle)}" ng-change="checkTitle(newSong.title)" placeholder="Song Title" ng-model="newSong.title"/><br>

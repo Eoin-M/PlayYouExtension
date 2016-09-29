@@ -1,3 +1,12 @@
+window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+ 
+window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction;
+window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange
+ 
+if (!window.indexedDB) {
+   window.alert("Your browser doesn't support a stable version of IndexedDB.")
+}
+
 angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 	function($scope, $http){
 		var danu = "http:danu7.it.nuigalway.ie:8620";
@@ -6,27 +15,71 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		$scope.addResponse;
 		$scope.songs = [];
 		$scope.songSearch = [];
-		console.log(window.location.href );
+		var numSongs;
 		
-		/*function escape(html) {
-		  return String(html)
-			.replace(/&/g, '&amp;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&#39;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;');
+		var db;
+		var request = indexedDB.open("songs", 3);
+		
+		request.onupgradeneeded = function(event) {
+			console.log("running onupgradeneeded");
+			var thisDB = event.target.result;
+ 
+			if(!thisDB.objectStoreNames.contains("song")) {
+				//thisDB.deleteObjectStore("song");
+				var objStore = thisDB.createObjectStore("song", {autoIncrement: true});
+			}
 		}
 		
-		function b64_to_utf8( str ) {
-		  return decodeURIComponent(escape(window.atob( str )));
+		request.onerror = function(event) {
+		  //alert("Why didn't you allow my web app to use IndexedDB?!")
+		};
+		
+		request.onsuccess = function(event) {
+			db = event.target.result;
+			var transaction = db.transaction(["song"]);
+			var objectStore = transaction.objectStore("song");
+			var getRequest = objectStore.getAll();
+			
+			getRequest.onerror = function(event) {
+			  // Handle errors!
+			};
+			getRequest.onsuccess = function(event) {
+			  // Do something with the getRequest.result!
+			  console.log(getRequest.result);
+			  $scope.songs = getRequest.result;
+			  numSongs = $scope.songs.length;
+			  console.log("NumSongs " + numSongs);
+			  $scope.getSongs();
+			};
+		};
+		
+		function dbSongs(songs) {
+			console.log("DBsongd " + songs.length);
+			if(songs.length <= 0) return;
+			var transaction = db.transaction(["song"], "readwrite")
+			var store = transaction.objectStore("song");
+			var add;
+			
+			for(var i = 0; i < songs.length; i++){
+				add = store.add(songs[i]);
+			
+				add.onerror = function(e) {
+					console.log("Error",e.target.error.name);
+					//some type of error handler
+				}
+				 
+				add.onsuccess = function(e) {
+				}
+			}
+		   
+		   transaction.onsuccess = function(event) {
+			  //alert("Prasad has been added to your database.");
+		   };
+		   
+		   transaction.onerror = function(event) {
+			  //alert("Unable to add data\r\nPrasad is already exist in your database! ");
+		   }
 		}
-				
-		function decodeToken(token){
-			var encodedUser;
-			encodedUser = decodeURI(b64_to_utf8(token.split('.')[1]));
-			$scope.user = JSON.parse(encodedUser); 
-			console.dir($scope.user);
-		};*/
 		
 		function url_base64_decode(str) {
 		  var output = str.replace(/-/g, '+').replace(/_/g, '/');
@@ -65,16 +118,20 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 			console.dir($scope.user);
 		}
 		
-		$scope.getSongs = function(){
-			$http.get(danu + '/api/playyou/getSongs')
+		$scope.getSongs = function(){	
+			console.log(numSongs);
+			$http.post(danu + '/api/playyou/getSongsAfter', {after: numSongs})
 			.success(function(data){
 				console.dir(data.songs);
-				console.log(data.songs[data.songs.length-1]._id.getTimestamp());
-				$scope.songs = data.songs;
+				$scope.songs = $scope.songs.concat(data.songs);
+				dbSongs(data.songs);
 				if($scope.newSong.link) $scope.checkLink($scope.newSong.link);
+				$scope.songSearch = [];
+				console.dir($scope.songSearch);
 				for(var i = 0; i < $scope.songs.length; i++){
 					$scope.songSearch.push($scope.songs[i].title + " - " + $scope.songs[i].artist);
 				}
+				console.dir($scope.songSearch);
 			})
 			.error(function(data, status){
 				alert("Error: " + status);
@@ -149,20 +206,6 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 			});
 		}
 		
-		$scope.me = function(){
-			$http.post(danu + '/api/playyou/test', {},{
-				headers: {
-					'authorization': 'Bearer ' + localStorage.getItem('JWT')
-				},
-			})
-			.success(function(data){
-				console.log(data);
-			})
-			.error(function(data){
-				console.log(data);
-			});
-		}
-		
 		$scope.logout = function(){
 			$scope.user = null;
 			$scope.songs = [];
@@ -178,7 +221,6 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		
 		function getForm(){
 			var url;
-			$scope.getSongs();
 			chrome.tabs.getSelected(null, function(tab){
 				console.dir(tab);
 				url = tab.url.split("&")[0];
@@ -199,6 +241,13 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		
 		function emptyString(str){
 			return (str == "" || str == undefined);
+		}
+		
+		$scope.switch = function(){
+			var temp = $scope.newSong.title;
+			$scope.newSong.title = $scope.newSong.artist;
+			$scope.newSong.artist = temp;
+			$scope.checkTitle($scope.newSong.title);
 		}
 		
 		$scope.checkTitle = function(title){
