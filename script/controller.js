@@ -7,6 +7,26 @@ if (!window.indexedDB) {
    window.alert("Your browser doesn't support a stable version of IndexedDB.")
 }
 
+/*String.prototype.levenstein = function(string) {
+    var a = this, b = string + "", m = [], i, j, min = Math.min;
+
+    if (!(a && b)) return (b || a).length;
+
+    for (i = 1; i <= b.length; i++) {
+		m[i] = [i];
+        for (j = 1; j <= a.length; j++) {
+			m[0][j] = j;
+            m[i][j] = b.charAt(i - 1) == a.charAt(j - 1)
+                ? m[i - 1][j - 1]
+                : m[i][j] = min(
+                    m[i - 1][j - 1] + 1, 
+                    min(m[i][j - 1] + 1, m[i - 1 ][j] + 1))
+        }
+    }
+
+    return m[b.length][a.length];
+}*/
+
 angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 	function($scope, $http){
 		var danu = "http:danu7.it.nuigalway.ie:8620";
@@ -45,7 +65,6 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 			};
 			getRequest.onsuccess = function(event) {
 			  // Do something with the getRequest.result!
-			  console.log(getRequest.result);
 			  $scope.songs = getRequest.result;
 			  numSongs = $scope.songs.length;
 			  console.log("NumSongs " + numSongs);
@@ -54,7 +73,7 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		};
 		
 		function dbSongs(songs) {
-			console.log("DBsongd " + songs.length);
+			console.log("DBsongs " + songs.length);
 			if(songs.length <= 0) return;
 			var transaction = db.transaction(["song"], "readwrite")
 			var store = transaction.objectStore("song");
@@ -122,12 +141,11 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 			console.log(numSongs);
 			$http.post(danu + '/api/playyou/getSongsAfter', {after: numSongs})
 			.success(function(data){
-				console.dir(data.songs);
 				$scope.songs = $scope.songs.concat(data.songs);
+				console.dir($scope.songs);
 				dbSongs(data.songs);
 				if($scope.newSong.link) $scope.checkLink($scope.newSong.link);
 				$scope.songSearch = [];
-				console.dir($scope.songSearch);
 				for(var i = 0; i < $scope.songs.length; i++){
 					$scope.songSearch.push($scope.songs[i].title + " - " + $scope.songs[i].artist);
 				}
@@ -136,45 +154,6 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 			.error(function(data, status){
 				alert("Error: " + status);
 			});
-		}
-		
-		$scope.checkLink = function(link){
-			console.log(link);
-			if(link === undefined || link == "") { $scope.correctLink = "Please Enter a Correct Link"; $scope.$apply(); return; }
-			var correctLength = link.split("&");
-			if(correctLength.length > 1) link = correctLength[0];
-			var vID = link.split('v=');
-			if(vID[1] === null || vID[1] === undefined) { $scope.correctLink = "Youtube VideoID Not Present"; return; }
-			vID = vID[1].split("&");
-			vID = vID[0];
-			$scope.newSong.link = link;
-			if(PlaylistLink(link)) { return; }
-			else {
-				var url = "https://www.googleapis.com/youtube/v3/videos";
-				var videoId = "id=" + vID;
-				var apiKey = "key=AIzaSyAaSh1l3C8s06zSRyNSh-GUnQr7nhZyHxo";
-				var part = "part=snippet";
-				var field = "fields=items(snippet(title))";
-
-				$.get(url + "?" + apiKey + "&" + videoId + "&" + field + "&" + part, function(response) {
-					console.log(response);
-					//if(response.pageInfo.totalResults > 0) {$scope.correctLink = null; $scope.$apply();}
-					if(response.items[0]) {
-						var guess = response.items[0].snippet.title.split(" - ");
-						console.log(guess);
-						//if(guess.length > 1){
-							if(emptyString($scope.newSong.title) && guess[1]) {
-								$scope.newSong.title = guess[1];
-								$scope.checkTitle($scope.newSong.title);
-							}
-							if(emptyString($scope.newSong.artist) && guess[0]) $scope.newSong.artist = guess[0];
-						//}
-						$scope.correctLink = null;
-						$scope.$apply();
-					}
-					else { $scope.correctLink = "Youtube Link Not Valid"; $scope.$apply();}
-				});
-			}
 		}
 		
 		function PlaylistLink(link){
@@ -252,6 +231,8 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		
 		$scope.checkTitle = function(title){
 			console.log("Check Title");
+			if(emptyString(title)) return;
+			
 			for(var i = 0; i < $scope.songs.length; i++){
 				if(title.toLowerCase() == $scope.songs[i].title.toLowerCase()){
 					$scope.correctTitle = "Song Title Already Submitted by: " + $scope.songs[i].submitted_by;
@@ -259,6 +240,45 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 				} else {
 					$scope.correctTitle = null;
 				}
+			}
+		}
+		
+		$scope.checkLink = function(link){
+			console.log(link);
+			if(emptyString(link)) { $scope.correctLink = "Please Enter a Correct Link"; $scope.$apply(); return; }
+			var correctLength = link.split("&");
+			if(correctLength.length > 1) link = correctLength[0];
+			var vID = link.split('v=');
+			if(vID[1] === null || vID[1] === undefined) { $scope.correctLink = "Youtube VideoID Not Present"; return; }
+			vID = vID[1].split("&");
+			vID = vID[0];
+			$scope.newSong.link = link;
+			if(PlaylistLink(link)) { return; }
+			else {
+				var url = "https://www.googleapis.com/youtube/v3/videos";
+				var videoId = "id=" + vID;
+				var apiKey = "key=AIzaSyAaSh1l3C8s06zSRyNSh-GUnQr7nhZyHxo";
+				var part = "part=snippet";
+				var field = "fields=items(snippet(title))";
+
+				$.get(url + "?" + apiKey + "&" + videoId + "&" + field + "&" + part, function(response) {
+					console.log(response);
+					//if(response.pageInfo.totalResults > 0) {$scope.correctLink = null; $scope.$apply();}
+					if(response.items[0]) {
+						var guess = response.items[0].snippet.title.split(" - ");
+						console.log(guess);
+						//if(guess.length > 1){
+							if(emptyString($scope.newSong.title) && guess[1]) {
+								$scope.newSong.title = guess[1];
+								$scope.checkTitle($scope.newSong.title);
+							}
+							if(emptyString($scope.newSong.artist) && guess[0]) $scope.newSong.artist = guess[0];
+						//}
+						$scope.correctLink = null;
+						$scope.$apply();
+					}
+					else { $scope.correctLink = "Youtube Link Not Valid"; $scope.$apply();}
+				});
 			}
 		}
 		
