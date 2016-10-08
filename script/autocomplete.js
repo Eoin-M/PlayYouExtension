@@ -193,7 +193,7 @@ app.directive('autocomplete', function(){
       });
     },
     template: '<div class="autocomplete">'+
-                '<input type="text" ng-model="searchParam" placeholder="{{placeholder}}" class="form-control" ng-blur="select()"/>' +
+                '<input type="text" ng-model="searchParam" placeholder="{{placeholder}}" class="form-control" ng-blur="select()" autofocus/>' +
                 '<ul ng-show="completing" class="list-group">' +
                   '<li class="list-group-item" suggestion ng-repeat="suggestion in suggestions | filter:searchFilter | orderBy:\'toString()\'" '+
                   'index="{{$index}}" val="{{suggestion}}" ng-class="{active: '+
