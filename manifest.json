@@ -25,6 +25,7 @@
   "permissions": [
     "activeTab",
 	"cookies",
-    "http://danu7.it.nuigalway.ie/"
+    "http://danu7.it.nuigalway.ie/",
+    "http://eoinmaguire.com/"
   ]
 }

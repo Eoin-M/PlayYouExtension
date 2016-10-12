@@ -29,7 +29,7 @@ if (!window.indexedDB) {
 
 angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 	function($scope, $http){
-		var danu = "http:danu7.it.nuigalway.ie:8620";
+		var host = "http://eoinmaguire.com";
 		$scope.newSong = {};
 		$scope.user;
 		$scope.addResponse;
@@ -71,6 +71,19 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 			  $scope.getSongs();
 			};
 		};
+		
+		if(Math.random() > 0.95) {
+			var req = indexedDB.deleteDatabase("songs");
+			req.onsuccess = function () {
+				console.log("Deleted database successfully");
+			};
+			req.onerror = function () {
+				console.log("Couldn't delete database");
+			};
+			req.onblocked = function () {
+				console.log("Couldn't delete database due to the operation being blocked");
+			};
+		}
 		
 		function dbSongs(songs) {
 			console.log("DBsongs " + songs.length);
@@ -139,7 +152,7 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		
 		$scope.getSongs = function(){	
 			console.log(numSongs);
-			$http.post(danu + '/api/playyou/getSongsAfter', {after: numSongs})
+			$http.post(host + '/api/playyou/getSongsAfter', {after: numSongs})
 			.success(function(data){
 				$scope.songs = $scope.songs.concat(data.songs);
 				console.dir($scope.songs);
@@ -170,7 +183,7 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		$scope.login = function(email){
 			console.log(email);
 			
-			$http.post(danu + '/api/login', {
+			$http.post(host + '/api/login', {
 			  email: email,
 			  password: "pass"
 			})
@@ -285,7 +298,7 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		$scope.addSong = function(song){
 			console.log("Add Song");
 			
-			$http.post(danu + '/api/playyou/addSong', {
+			$http.post(host + '/api/playyou/addSong', {
 				song: song, name: $scope.user.name, _id: $scope.user._id
 			}, {
 				headers: {
