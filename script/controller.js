@@ -29,7 +29,7 @@ if (!window.indexedDB) {
 
 angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 	function($scope, $http){
-		var host = "http://eoinmaguire.com";
+		var host = "https://eoinmaguire.com";
 		$scope.newSong = {};
 		$scope.user;
 		$scope.addResponse;
