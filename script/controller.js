@@ -232,7 +232,7 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		}
 		
 		function emptyString(str){
-			return (str == "" || str == undefined);
+			return (str === '' || str === undefined || str === null);
 		}
 		
 		$scope.switch = function(){
