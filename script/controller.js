@@ -216,7 +216,7 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 			chrome.tabs.getSelected(null, function(tab){
 				console.dir(tab);
 				url = tab.url.split("&")[0];
-				if(url.indexOf("www.youtube.com/watch?v=") >= 0){
+				if(url.indexOf('youtu') >= 0){
 					console.log("Youtube");
 					$scope.newSong.link = url;
 					console.log("Check Link");
@@ -258,27 +258,26 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 		
 		$scope.checkLink = function(link){
 			console.log(link);
-			if(emptyString(link)) { $scope.correctLink = "Please Enter a Correct Link"; $scope.$apply(); return; }
-			var correctLength = link.split("&");
-			if(correctLength.length > 1) link = correctLength[0];
-			var vID = link.split('v=');
-			if(vID[1] === null || vID[1] === undefined) { $scope.correctLink = "Youtube VideoID Not Present"; return; }
-			vID = vID[1].split("&");
-			vID = vID[0];
+			if(emptyString(link)) { $scope.correctLink = 'Please Enter a Correct Link'; $scope.$apply(); return; }
+			if(link.length == 11) link = 'https://www.youtube.com/watch?v=' + link; //just the 11 char video id
+			var ytReg = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i;
+			var vID = link.match(ytReg) || ['', '']; //second string will always be video id, or it could return null
+			vID = vID[1];
+			if(emptyString(vID)) { $scope.correctLink = 'Youtube VideoID Not Present'; return; }
 			$scope.newSong.link = link;
 			if(PlaylistLink(link)) { return; }
 			else {
-				var url = "https://www.googleapis.com/youtube/v3/videos";
-				var videoId = "id=" + vID;
-				var apiKey = "key=AIzaSyAaSh1l3C8s06zSRyNSh-GUnQr7nhZyHxo";
-				var part = "part=snippet";
-				var field = "fields=items(snippet(title))";
+				var url = 'https://www.googleapis.com/youtube/v3/videos';
+				var videoId = 'id=' + vID;
+				var apiKey = 'key=AIzaSyAaSh1l3C8s06zSRyNSh-GUnQr7nhZyHxo';
+				var part = 'part=snippet';
+				var field = 'fields=items(snippet(title))';
 
-				$.get(url + "?" + apiKey + "&" + videoId + "&" + field + "&" + part, function(response) {
+				$.get(url + '?' + apiKey + '&' + videoId + '&' + field + '&' + part, function(response) {
 					console.log(response);
 					//if(response.pageInfo.totalResults > 0) {$scope.correctLink = null; $scope.$apply();}
 					if(response.items[0]) {
-						var guess = response.items[0].snippet.title.split(" - ");
+						var guess = response.items[0].snippet.title.split(' - ');
 						console.log(guess);
 						//if(guess.length > 1){
 							if(emptyString($scope.newSong.title) && guess[1]) {
@@ -287,10 +286,11 @@ angular.module('PlayYouApp', ['autocomplete']).controller('PlayYouController',
 							}
 							if(emptyString($scope.newSong.artist) && guess[0]) $scope.newSong.artist = guess[0];
 						//}
+						$scope.newSong.link = 'https://www.youtube.com/watch?v=' + vID;
 						$scope.correctLink = null;
 						$scope.$apply();
 					}
-					else { $scope.correctLink = "Youtube Link Not Valid"; $scope.$apply();}
+					else { $scope.correctLink = 'Youtube Link Not Valid'; $scope.$apply();}
 				});
 			}
 		}
